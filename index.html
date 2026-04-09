@@ -138,6 +138,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzkIAP_spCVEMj7O2s1iaXf
 async function api(action, data) {
   const res = await fetch(API_URL, {
     method: "POST",
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action, ...data })
   });
   return res.json();
@@ -150,10 +151,8 @@ let STATE = {
   editingMens: null, addingMens: false,
 };
 
-// Plans chargés dynamiquement depuis Google Sheets (onglet PLAN)
 let PLANS = {};
 
-// Options protéines (fixes — gérer dans le code si tu veux les changer)
 const PR_M3 = [
   { name:"Filet de poulet", qty:150, ref:100, cal:110, prot:22.2, gluc:1,  lip:2   },
   { name:"Crevettes",       qty:170, ref:100, cal:99,  prot:24,   gluc:0,  lip:1   },
@@ -173,7 +172,6 @@ const PR_M5 = [
   { name:"Tofu",            qty:130, ref:100, cal:76,  prot:8,    gluc:1,  lip:4   },
 ];
 
-// Injecte les options protéines sur les items marqués "Proteine au choix"
 function injectProteinOpts(plans) {
   for (const plan of Object.values(plans)) {
     for (const meal of plan.meals) {
@@ -595,7 +593,6 @@ async function loadAllData(showMessage = false) {
     STATE.mensurations = mensurations || [];
     if (plans && Object.keys(plans).length > 0) {
       PLANS = injectProteinOpts(plans);
-      // Activer le premier plan si l'actif n'existe plus
       if (!PLANS[STATE.activePlan]) STATE.activePlan = Object.keys(PLANS)[0];
     }
     render();

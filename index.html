@@ -133,7 +133,7 @@
 <div class="toast" id="toast">Enregistré ✓</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbz_yhCoSoLl9Sk5wiGbo1lEmn5fbTSWraW2RvZvGKaKnFSxuRJ0-3PWroxQwpoLNujJ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwW-6QfRPS7pYbUeBriglp3XhD4oGlf1lWrSJvuYTG6gwgmS9fRJJMbuCuraGw4vxT4/exec";
 
 async function api(action, data) {
   const res = await fetch(API_URL, {
@@ -150,6 +150,10 @@ let STATE = {
   editingMens: null, addingMens: false,
 };
 
+// Plans chargés dynamiquement depuis Google Sheets (onglet PLAN)
+let PLANS = {};
+
+// Options protéines (fixes — gérer dans le code si tu veux les changer)
 const PR_M3 = [
   { name:"Filet de poulet", qty:150, ref:100, cal:110, prot:22.2, gluc:1,  lip:2   },
   { name:"Crevettes",       qty:170, ref:100, cal:99,  prot:24,   gluc:0,  lip:1   },
@@ -168,114 +172,22 @@ const PR_M5 = [
   { name:"Boeuf maigre",    qty:90,  ref:100, cal:150, prot:22,   gluc:0,  lip:6   },
   { name:"Tofu",            qty:130, ref:100, cal:76,  prot:8,    gluc:1,  lip:4   },
 ];
-const FEC = { name:"Feculents cuits au choix",    ref:100, cal:115, prot:2.6, gluc:23,  lip:0.9 };
-const LEG = { name:"Legumes / crudites au choix", ref:100, cal:30,  prot:1.2, gluc:4.5, lip:0.2 };
 
-const PLANS = {
-  normal: { label:"Plan Normal", emoji:"🥗", meals:[
-    { id:"m1", name:"Meal 1", time:"Matin - a jeun", color:"#fff8e1", accent:"#f57f17", border:"#ffe082",
-      items:[
-        { name:"Oeuf entier", qty:3, unit:"pieces", ref:1, cal:74, prot:6.5, gluc:0.4, lip:5.1 },
-        { name:"Jambon maigre", qty:70, unit:"g", ref:100, cal:100, prot:22, gluc:1, lip:3 },
-        { name:"Banane", qty:120, unit:"g", ref:100, cal:89, prot:1, gluc:23, lip:0 },
-        { name:"Compote sans sucre", qty:100, unit:"g", ref:100, cal:57, prot:0.5, gluc:12.5, lip:0.3 },
-        { name:"Zinc bisglycinate 15mg", supplement:true },
-        { name:"Creatine 5g", supplement:true },
-        { name:"Omega 3 3g", supplement:true },
-        { name:"Vitamine D3K2 1000 UI", supplement:true },
-        { name:"Vitamine C 750mg", supplement:true },
-      ]},
-    { id:"m2", name:"Meal 2", time:"Collation matin", color:"#e8f5e9", accent:"#2e7d32", border:"#a5d6a7",
-      items:[
-        { name:"Isolat de whey", qty:15, unit:"g", ref:100, cal:380, prot:92, gluc:1, lip:1 },
-        { name:"Banane", qty:120, unit:"g", ref:100, cal:89, prot:1, gluc:23, lip:0 },
-        { name:"Dattes", qty:40, unit:"g", ref:100, cal:282, prot:2.5, gluc:75, lip:0.5 },
-      ]},
-    { id:"m3", name:"Meal 3", time:"Dejeuner", color:"#e3f2fd", accent:"#1565c0", border:"#90caf9",
-      items:[
-        { ...FEC, qty:150, unit:"g" },
-        { name:"Proteine au choix", qty:150, unit:"g", ref:100, cal:110, prot:22.2, gluc:1, lip:2, isProtein:true, opts:PR_M3 },
-        { ...LEG, qty:250, unit:"g" },
-        { name:"Oleagineux au choix", qty:15, unit:"g", ref:100, cal:578, prot:21.7, gluc:12.3, lip:46.9 },
-      ]},
-    { id:"m4", name:"Meal 4", time:"Collation apres-midi", color:"#fce4ec", accent:"#ad1457", border:"#f48fb1",
-      items:[
-        { name:"Sere maigre", qty:150, unit:"g", ref:100, cal:67, prot:12, gluc:3.5, lip:0.3 },
-        { name:"Avoine", qty:40, unit:"g", ref:100, cal:360, prot:15, gluc:64, lip:6 },
-        { name:"Framboise", qty:100, unit:"g", ref:100, cal:55, prot:1.2, gluc:12, lip:0.7 },
-        { name:"Chocolat 70%", qty:10, unit:"g", ref:100, cal:572, prot:9, gluc:30, lip:40 },
-      ]},
-    { id:"m5", name:"Meal 5", time:"Diner", color:"#f3e5f5", accent:"#6a1b9a", border:"#ce93d8",
-      subGroups:[
-        { label:"Apero", items:[
-          { name:"Jambon maigre", qty:70, unit:"g", ref:100, cal:100, prot:22, gluc:1, lip:3 },
-          { name:"Tomates cerise", qty:200, unit:"g", ref:100, cal:20, prot:1, gluc:4.5, lip:0.3 },
-        ]},
-        { label:"Repas", items:[
-          { ...FEC, qty:150, unit:"g" },
-          { name:"Proteine au choix", qty:100, unit:"g", ref:100, cal:110, prot:22.2, gluc:1, lip:2, isProtein:true, opts:PR_M5 },
-          { ...LEG, qty:250, unit:"g" },
-          { name:"Dattes", qty:20, unit:"g", ref:100, cal:282, prot:2.5, gluc:75, lip:0.5 },
-          { name:"Chocolat 70%", qty:20, unit:"g", ref:100, cal:572, prot:9, gluc:30, lip:40 },
-          { name:"Magnesium bisglycinate 240mg", supplement:true },
-        ]},
-      ]},
-    { id:"tr", name:"Training", time:"Intra-entrainement", color:"#fbe9e7", accent:"#bf360c", border:"#ffab91",
-      items:[
-        { name:"Maltodextrine", qty:50, unit:"g", ref:100, cal:380, prot:0.1, gluc:95, lip:0.1 },
-        { name:"Electrolytes", supplement:true },
-      ]},
-  ]},
-  prehyrox: { label:"Pre-Hyrox -2J", emoji:"⚡", meals:[
-    { id:"m1", name:"Meal 1", time:"Matin - a jeun", color:"#fff8e1", accent:"#f57f17", border:"#ffe082",
-      items:[
-        { name:"Pain au levain", qty:60, unit:"g", ref:100, cal:289, prot:11.75, gluc:57, lip:0.5 },
-        { name:"Confiture", qty:30, unit:"g", ref:100, cal:244, prot:0.5, gluc:59, lip:0.5 },
-        { name:"Skyr", qty:200, unit:"g", ref:100, cal:56, prot:9, gluc:3.8, lip:0.1 },
-        { name:"Miel", qty:20, unit:"g", ref:100, cal:300, prot:0.01, gluc:83, lip:0.5 },
-        { name:"Banane", qty:120, unit:"g", ref:100, cal:89, prot:1, gluc:23, lip:0 },
-        { name:"Zinc bisglycinate 15mg", supplement:true },
-        { name:"Creatine 5g", supplement:true },
-        { name:"Omega 3 3g", supplement:true },
-        { name:"Vitamine D3K2 1000 UI", supplement:true },
-      ]},
-    { id:"m2", name:"Meal 2", time:"Collation matin", color:"#e8f5e9", accent:"#2e7d32", border:"#a5d6a7",
-      items:[
-        { name:"Iso whey", qty:15, unit:"g", ref:100, cal:474, prot:92, gluc:1, lip:1 },
-        { name:"Compote sans sucre", qty:200, unit:"g", ref:100, cal:57, prot:0.5, gluc:12.5, lip:0.3 },
-        { name:"Galettes de riz", qty:3, unit:"pieces", ref:1, cal:35, prot:0.8, gluc:7.5, lip:0.3 },
-      ]},
-    { id:"m3", name:"Meal 3", time:"Dejeuner - charge glucidique", color:"#e3f2fd", accent:"#1565c0", border:"#90caf9",
-      items:[
-        { ...FEC, qty:300, unit:"g" },
-        { name:"Filet de poulet", qty:150, unit:"g", ref:100, cal:110, prot:22.2, gluc:1, lip:2 },
-        { name:"Oleagineux au choix", qty:15, unit:"g", ref:100, cal:578, prot:21.7, gluc:12.3, lip:46.9 },
-        { name:"Compote sans sucre", qty:200, unit:"g", ref:100, cal:57, prot:0.5, gluc:12.5, lip:0.3 },
-      ]},
-    { id:"m4", name:"Meal 4", time:"Collation apres-midi", color:"#fce4ec", accent:"#ad1457", border:"#f48fb1",
-      items:[
-        { name:"Iso whey", qty:15, unit:"g", ref:100, cal:474, prot:92, gluc:1, lip:1 },
-        { name:"Banane", qty:120, unit:"g", ref:100, cal:89, prot:1, gluc:23, lip:0 },
-        { name:"Galettes de riz", qty:2, unit:"pieces", ref:1, cal:35, prot:0.8, gluc:7.5, lip:0.3 },
-        { name:"Compote sans sucre", qty:100, unit:"g", ref:100, cal:57, prot:0.5, gluc:12.5, lip:0.3 },
-      ]},
-    { id:"m5", name:"Meal 5", time:"Diner", color:"#f3e5f5", accent:"#6a1b9a", border:"#ce93d8",
-      items:[
-        { ...FEC, qty:300, unit:"g" },
-        { name:"Filet de poulet", qty:150, unit:"g", ref:100, cal:110, prot:22.2, gluc:1, lip:2 },
-        { name:"Huile d'olive", qty:1, unit:"c.a.s.", ref:1, cal:87, prot:0, gluc:0.1, lip:10 },
-        { name:"Banane", qty:120, unit:"g", ref:100, cal:89, prot:1, gluc:23, lip:0 },
-        { name:"Magnesium bisglycinate 240mg", supplement:true },
-        { name:"Glycine 5g", supplement:true },
-      ]},
-    { id:"tr", name:"Training", time:"Intra-entrainement", color:"#fbe9e7", accent:"#bf360c", border:"#ffab91",
-      items:[
-        { name:"Maltodextrine", qty:50, unit:"g", ref:100, cal:380, prot:0.1, gluc:95, lip:0.1 },
-        { name:"Iso whey", qty:15, unit:"g", ref:100, cal:474, prot:90, gluc:1, lip:0 },
-        { name:"Electrolytes", supplement:true },
-      ]},
-  ]},
-};
+// Injecte les options protéines sur les items marqués "Proteine au choix"
+function injectProteinOpts(plans) {
+  for (const plan of Object.values(plans)) {
+    for (const meal of plan.meals) {
+      const items = meal.subGroups ? meal.subGroups.flatMap(g=>g.items) : (meal.items||[]);
+      items.forEach(item => {
+        if (item.name && item.name.toLowerCase().includes("proteine au choix")) {
+          item.isProtein = true;
+          item.opts = meal.id === "m5" ? PR_M5 : PR_M3;
+        }
+      });
+    }
+  }
+  return plans;
+}
 
 const MONTHS = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
 const DAYS_SHORT = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
@@ -316,6 +228,10 @@ function showToast(msg) {
 }
 
 function renderPlan() {
+  if (!PLANS || Object.keys(PLANS).length === 0) {
+    return '<div style="text-align:center;padding:40px 20px;color:#aaa;font-size:14px">Chargement du plan...</div>';
+  }
+  if (!PLANS[STATE.activePlan]) STATE.activePlan = Object.keys(PLANS)[0];
   const plan = PLANS[STATE.activePlan];
   const totals = plan.meals.reduce((acc,meal)=>{
     getAllItems(meal).forEach(item=>{
@@ -589,6 +505,7 @@ function render() {
       <p>HYROX Coaching · Donnees sauvegardees dans Google Sheets</p>
       <div style="margin-top:10px;display:flex;gap:8px;">
         <button onclick="loadAllData(true)" style="padding:8px 14px;border:none;border-radius:8px;background:#1565c0;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">↻ Rafraichir</button>
+        <button onclick="reloadPlans()" style="padding:8px 14px;border:1.5px solid #1565c0;border-radius:8px;background:#fff;color:#1565c0;font-size:12px;font-weight:700;cursor:pointer;">↺ Recharger plan</button>
       </div>
     </div>
     <div class="tabs">${tabs.map((t,i)=>`<button class="tab-btn ${STATE.tab===t?"active":""}" onclick="setTab('${t}')">${tabLabels[i]}</button>`).join("")}</div>
@@ -669,12 +586,18 @@ async function deleteMens(id) {
 
 async function loadAllData(showMessage = false) {
   try {
-    const [suivi, mensurations] = await Promise.all([
+    const [suivi, mensurations, plans] = await Promise.all([
       api("getSuivi", {}),
-      api("getMensurations", {})
+      api("getMensurations", {}),
+      Object.keys(PLANS).length === 0 ? api("getPlans", {}) : Promise.resolve(null)
     ]);
     STATE.suivi = suivi || {};
     STATE.mensurations = mensurations || [];
+    if (plans && Object.keys(plans).length > 0) {
+      PLANS = injectProteinOpts(plans);
+      // Activer le premier plan si l'actif n'existe plus
+      if (!PLANS[STATE.activePlan]) STATE.activePlan = Object.keys(PLANS)[0];
+    }
     render();
     if (showMessage) showToast("Donnees rafraichies");
   } catch(e) {
@@ -682,6 +605,18 @@ async function loadAllData(showMessage = false) {
     STATE.mensurations = [];
     render();
   }
+}
+
+async function reloadPlans() {
+  try {
+    const plans = await api("getPlans", {});
+    if (plans && Object.keys(plans).length > 0) {
+      PLANS = injectProteinOpts(plans);
+      if (!PLANS[STATE.activePlan]) STATE.activePlan = Object.keys(PLANS)[0];
+    }
+    render();
+    showToast("Plan mis a jour ✓");
+  } catch(e) { showToast("Erreur chargement plan"); }
 }
 
 loadAllData(false);

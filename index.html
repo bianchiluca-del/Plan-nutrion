@@ -128,23 +128,22 @@
 </head>
 <body>
 <div class="app" id="app">
-  <div class="loader">Chargement des données...</div>
+  <div class="loader">Chargement des donnees...</div>
 </div>
-<div class="toast" id="toast">Enregistré ✓</div>
+<div class="toast" id="toast">Enregistre ✓</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzkIAP_spCVEMj7O2s1iaXfQI3icyCZ9AaqFyZ4Yq-rTUlSEqifaedtWT3o0UGBWLYN/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwMEucNfSqmatXRvtBFEtp86SBs-fulbLKGzxQO38RdeMkFVckpONfuq0aKbf8s4H-v/exec";
 
 async function api(action, data) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    redirect: "follow",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ action, ...data })
-  });
+  const url = new URL(API_URL);
+  url.searchParams.set("action", action);
+  if (data && Object.keys(data).length > 0) {
+    url.searchParams.set("data", JSON.stringify(data));
+  }
+  const res = await fetch(url.toString(), { redirect: "follow" });
   return res.json();
 }
-
 
 let STATE = {
   tab: "plan", activePlan: "normal", suivi: {}, mensurations: [],

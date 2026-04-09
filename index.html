@@ -138,11 +138,13 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzkIAP_spCVEMj7O2s1iaXf
 async function api(action, data) {
   const res = await fetch(API_URL, {
     method: "POST",
+    redirect: "follow",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action, ...data })
   });
   return res.json();
 }
+
 
 let STATE = {
   tab: "plan", activePlan: "normal", suivi: {}, mensurations: [],
